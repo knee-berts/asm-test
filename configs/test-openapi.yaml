@@ -1,0 +1,10 @@
+  swagger: "2.0"
+  info:
+    description: "Cloud Endpoints DNS"
+    title: "Cloud Endpoints DNS"
+    version: "1.0.0"
+  paths: {}
+  host: "test.endpoints.{{PROJECT_ID}}.cloud.goog"
+  x-google-endpoints:
+  - name: "test.endpoints.{{PROJECT_ID}}.cloud.goog"
+    target: "{{ASM_GW_IP}}"

@@ -1,0 +1,10 @@
+apiVersion: v1
+metadata:
+  name: asm-options
+  namespace: istio-system
+data:
+  mesh: |-
+    accessLogFile: /dev/stdout
+    multicluster_mode: connected
+    trustDomainAliases: ["{{PROJECT_ID}}.svc.id.goog"]
+kind: ConfigMap
