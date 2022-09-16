@@ -96,11 +96,6 @@ cd -
 echo "Creating gcp endpoints for test app."
 gcloud endpoints services deploy configs/test-openapi.yaml --project ${PROJECT_ID} --async -q
 
-# Enable ingress feature which also enables the multi-cluster-services feature controller
-gcloud container fleet ingress enable \
---config-membership=/projects/${PROJECT_ID}/locations/global/memberships/"gke-${CLUSTER_TYPE}-us-central1" \
---project=${PROJECT_ID}
-
 # Enable mesh feature
 gcloud container fleet mesh enable --project=${PROJECT_ID}
 gcloud projects add-iam-policy-binding ${PROJECT_ID}  \
@@ -110,14 +105,13 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID}  \
 ## Create Clusters
 echo "Creating a GKE clusters"
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
-  if [[ ${CLUSTER_TYPE} == "autopilot" ]]; then
+  if [[ ${CLUSTER_TYPE} == "ap" ]]; then
     REGION=$(echo ${CLUSTER} | awk -F "-"  '{print $3 "-" $4}' )
     gcloud beta container --project ${PROJECT_ID} clusters create-auto ${CLUSTER} \
       --region ${REGION} \
       --release-channel ${RELEASE_CHANNEL} \
       --network "demo-vpc" \
       --enable-master-authorized-networks \
-      --labels mesh_id=proj-${PROJECT_NUMBER} \
       --master-authorized-networks 0.0.0.0/0 \
       --async
 
@@ -141,8 +135,7 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
       --async
     fi
 done
-RUNNING_CLUSTERS=$(gcloud container clusters list --project ${PROJECT_ID} --filter "STATUS=RUNNING" --format="value(name)"| wc -l | awk '{print $1}') 
-while [[ ${RUNNING_CLUSTERS} != "3" ]]; do
+while [[ $(gcloud container clusters list --project ${PROJECT_ID} --filter "STATUS=RUNNING" --format="value(name)"| wc -l | awk '{print $1}') != "3" ]]; do
   echo "Waiting for all the cluster installs to complete."
   sleep 5
 done
@@ -194,6 +187,11 @@ else
       --domains=whereami.endpoints.${PROJECT_ID}.cloud.goog \
       --global
 fi
+
+# Enable ingress feature which also enables the multi-cluster-services feature controller
+gcloud container fleet ingress enable \
+--config-membership=/projects/${PROJECT_ID}/locations/global/memberships/"gke-${CLUSTER_TYPE}-us-central1" \
+--project=${PROJECT_ID}
 
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
   kubectl apply -f ${WORKDIR}/configs/all-clusters/pre-reqs/.
