@@ -22,6 +22,7 @@ mkdir tmp
 touch kubeconfig
 export KUBECONFIG=${WORKDIR}/kubeconfig
 
+echo "Enabling GCP services"
 gcloud services enable \
   --project=${PROJECT_ID} \
   anthos.googleapis.com \
