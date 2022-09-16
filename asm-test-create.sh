@@ -96,6 +96,16 @@ cd -
 echo "Creating gcp endpoints for test app."
 gcloud endpoints services deploy configs/test-openapi.yaml --project ${PROJECT_ID} --async -q
 
+# Enable ingress feature which also enables the multi-cluster-services feature controller
+gcloud container fleet ingress enable \
+--config-membership=/projects/${PROJECT_ID}/locations/global/memberships/"gke-${CLUSTER_TYPE}-us-central1" \
+--project=${PROJECT_ID}
+
+# Enable mesh feature
+gcloud container fleet mesh enable --project=${PROJECT_ID}
+gcloud projects add-iam-policy-binding ${PROJECT_ID}  \
+  --member "serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-servicemesh.iam.gserviceaccount.com" \
+  --role roles/anthosservicemesh.serviceAgent
 
 ## Create Clusters
 echo "Creating a GKE clusters"
@@ -152,6 +162,11 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
       --project=${PROJECT_ID} \
       --gke-cluster=${REGION}/${CLUSTER} \
       --enable-workload-identity
+    
+    gcloud container fleet mesh update \
+      --control-plane automatic \
+      --memberships ${CLUSTER} \
+      --project ${PROJECT_ID}
   else
     ZONE=$(echo ${CLUSTER} | awk -F "-"  '{print $3 "-" $4 "-b"}' )
     
@@ -162,19 +177,13 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
       --project=${PROJECT_ID} \
       --gke-cluster=${ZONE}/${CLUSTER} \
       --enable-workload-identity   
+    
+    gcloud container fleet mesh update \
+      --control-plane automatic \
+      --memberships ${CLUSTER} \
+      --project ${PROJECT_ID}
   fi 
 done
-
-# Enable ingress feature which also enables the multi-cluster-services feature controller
-gcloud container fleet ingress enable \
---config-membership=/projects/${PROJECT_ID}/locations/global/memberships/"gke-${CLUSTER_TYPE}-us-central1" \
---project=${PROJECT_ID}
-
-# Enable mesh feature
-gcloud container fleet mesh enable --project=${PROJECT_ID}
-gcloud projects add-iam-policy-binding ${PROJECT_ID}  \
-  --member "serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-servicemesh.iam.gserviceaccount.com" \
-  --role roles/anthosservicemesh.serviceAgent
 
 ## Install MCI MCS and ASM Gateways
 if [[ $(gcloud compute ssl-certificates describe whereami-cert --project ${PROJECT_ID}) ]]; then
@@ -187,11 +196,6 @@ else
 fi
 
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
-  gcloud container fleet mesh update \
-      --control-plane automatic \
-      --memberships ${CLUSTER} \
-      --project ${PROJECT_ID}
-
   kubectl apply -f ${WORKDIR}/configs/all-clusters/pre-reqs/.
 
   openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
@@ -223,6 +227,3 @@ done
 kubectl apply -f ${WORKDIR}/configs/all-clusters/config-cluster/. --context "gke-${CLUSTER_TYPE}-us-central1"  
 
 echo "ASM MCP test env installed"
-
-
-
