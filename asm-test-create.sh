@@ -2,8 +2,6 @@
 
 set -Euo pipefail
 
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
-
 while getopts p:r:t: flag
 do
   case "${flag}" in
@@ -49,7 +47,6 @@ GKE_CLUSTERS=(
   "gke-${CLUSTER_TYPE}-us-east1"
   "gke-${CLUSTER_TYPE}-us-central1"
 )
-
 
 echo "Creating a VPC."
 if [[ $(gcloud compute networks describe demo-vpc --project ${PROJECT_ID}) ]]; then
@@ -188,13 +185,17 @@ else
       --global
 fi
 
-# Enable ingress feature which also enables the multi-cluster-services feature controller
+# Enable ingress feature which also enables the multi-cluster-services feature controller and install test app
 gcloud container fleet ingress enable \
 --config-membership=/projects/${PROJECT_ID}/locations/global/memberships/"gke-${CLUSTER_TYPE}-us-central1" \
 --project=${PROJECT_ID}
 
+git clone https://github.com/theemadnes/gke-whereami.git configs/all-clusters/whereami
+
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
   kubectl apply -f ${WORKDIR}/configs/all-clusters/pre-reqs/.
+  kubectl apply -k whereami/k8s-backend-overlay-example/ --context=${CLUSTER} -n whereami
+  kubectl apply -k whereami/k8s-frontend-overlay-example/ --context=${CLUSTER} -n whereami
 
   openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
     -subj "/CN=frontend.endpoints.${PROJECT_ID}.cloud.goog/O=Edge2Mesh Inc" \
@@ -219,9 +220,10 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
     done
   fi
   echo "ASM MCP webhook has been created."   
-  kubectl apply -f ${WORKDIR}/configs/all-clusters/asm-gateways/.
+  kubectl apply -f ${WORKDIR}/configs/all-clusters/.
+
 done
 
-kubectl apply -f ${WORKDIR}/configs/all-clusters/config-cluster/. --context "gke-${CLUSTER_TYPE}-us-central1"  
+kubectl apply -f ${WORKDIR}/configs/config-cluster/. --context "gke-${CLUSTER_TYPE}-us-central1"  
 
 echo "ASM MCP test env installed"

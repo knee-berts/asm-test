@@ -6,6 +6,6 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: test
+  name: whereami
   labels:
     istio.io/rev: asm-managed
