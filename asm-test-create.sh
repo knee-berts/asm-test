@@ -168,7 +168,7 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
       --gke-cluster=${ZONE}/${CLUSTER} \
       --enable-workload-identity   
     
-    [[ ${CONTROL_PLANE} == "automatic" ]]; then 
+   if [[ ${CONTROL_PLANE} == "automatic" ]]; then 
       gcloud container fleet mesh update \
         --control-plane automatic \
         --memberships ${CLUSTER} \
@@ -176,6 +176,7 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
     else
       kubectl apply -f configs/cpr.yaml --context ${CLUSTER}
       kubectl apply -f configs/mesh-config.yaml --context ${CLUSTER}
+    fi
   fi 
 done
 
