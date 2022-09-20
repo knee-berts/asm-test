@@ -194,8 +194,8 @@ gcloud container fleet ingress enable \
 git clone https://github.com/theemadnes/gke-whereami.git configs/all-clusters/whereami
 
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
-  kubectl apply -f ${WORKDIR}/configs/all-clusters/pre-reqs/.
-  kubectl apply -k whereami/k8s-backend-overlay-example/ --context=${CLUSTER} -n whereami
+  kubectl apply -f ${WORKDIR}/configs/all-clusters/pre-reqs/. --context ${CLUSTER}
+  kubectl apply -k whereami/k8s-backend-overlay-example/ --context=${CLUSTER} -n whereami 
   kubectl apply -k whereami/k8s-frontend-overlay-example/ --context=${CLUSTER} -n whereami
 
   openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
@@ -208,20 +208,20 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
 
   echo -n "Waiting for the ASM MCP webhook to install."
   if [[ "${RELEASE_CHANNEL}" == "rapid" ]]; then
-    until kubectl get mutatingwebhookconfigurations istiod-asm-managed-rapid
+    until kubectl get mutatingwebhookconfigurations istiod-asm-managed-rapid --context ${CLUSTER}
     do
       echo -n "...still waiting for ASM MCP webhook creation"
       sleep 5
     done
   else 
-    until kubectl get mutatingwebhookconfigurations istiod-asm-managed
+    until kubectl get mutatingwebhookconfigurations istiod-asm-managed --context ${CLUSTER}
     do
       echo -n "...still waiting for ASM MCP webhook creation"
       sleep 5
     done
   fi
   echo "ASM MCP webhook has been created."   
-  kubectl apply -f ${WORKDIR}/configs/all-clusters/.
+  kubectl apply -f ${WORKDIR}/configs/all-clusters/. --context ${CLUSTER}
 
 done
 
