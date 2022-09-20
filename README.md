@@ -22,6 +22,8 @@ make install-ap-rapid
 make install-ap-regular
 ```
 
+
+::WIP::
 And a command to test Autopilot or Standard clusters connectivity
 * GKE Autopilot connectivity test
 ```bash
