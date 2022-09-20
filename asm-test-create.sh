@@ -13,7 +13,7 @@ done
 
 echo "::Variable set::"
 echo "PROJECT_ID: ${PROJECT_ID}"
-echo "RELEASE_CHANNEL: ${RELEASE_CHANNEL}" ## REGULAR or RAPID
+echo "RELEASE_CHANNEL: ${RELEASE_CHANNEL}" ## regular or rapid
 echo "CLUSTER_TYPE: ${CLUSTER_TYPE}"  ## std or ap 
 
 export PROJECT_NUMBER=$(gcloud projects describe ${PROJECT_ID} --format="value(projectNumber)")
@@ -207,7 +207,7 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
     --cert=tmp/frontend.endpoints.${PROJECT_ID}.cloud.goog.crt --context ${CLUSTER}
 
   echo -n "Waiting for the ASM MCP webhook to install."
-  if [[ "${RELEASE_CHANNEL}" == "RAPID" ]]; then
+  if [[ "${RELEASE_CHANNEL}" == "rapid" ]]; then
     until kubectl get mutatingwebhookconfigurations istiod-asm-managed-rapid
     do
       echo -n "...still waiting for ASM MCP webhook creation"
