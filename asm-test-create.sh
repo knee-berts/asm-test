@@ -194,7 +194,7 @@ gcloud container fleet ingress enable \
 git clone https://github.com/theemadnes/gke-whereami.git configs/all-clusters/whereami
 
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
-  kubectl apply -f ${WORKDIR}/configs/all-clusters/pre-reqs/. --context ${CLUSTER}
+  kubectl apply -f ${WORKDIR}/configs/pre-reqs/. --context ${CLUSTER}
   kubectl apply -k whereami/k8s-backend-overlay-example/ --context=${CLUSTER} -n whereami 
   kubectl apply -k whereami/k8s-frontend-overlay-example/ --context=${CLUSTER} -n whereami
 
