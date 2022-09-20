@@ -2,12 +2,13 @@
 
 set -Euo pipefail
 
-while getopts p:r:t: flag
+while getopts p:r:t:c: flag
 do
   case "${flag}" in
       p) PROJECT_ID=${OPTARG};;
       r) RELEASE_CHANNEL=${OPTARG};;
       t) CLUSTER_TYPE=${OPTARG};;
+      c) CONTROL_PLANE=${OPTARG};;
   esac
 done
 
@@ -15,6 +16,7 @@ echo "::Variable set::"
 echo "PROJECT_ID: ${PROJECT_ID}"
 echo "RELEASE_CHANNEL: ${RELEASE_CHANNEL}" ## regular or rapid
 echo "CLUSTER_TYPE: ${CLUSTER_TYPE}"  ## std or ap 
+echo "CONTROL_PLANE: ${CONTROL_PLANE}"  ## automatic or manual
 
 export PROJECT_NUMBER=$(gcloud projects describe ${PROJECT_ID} --format="value(projectNumber)")
 export WORKDIR=`pwd`
@@ -153,10 +155,19 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
       --gke-cluster=${REGION}/${CLUSTER} \
       --enable-workload-identity
     
-    gcloud container fleet mesh update \
-      --control-plane automatic \
-      --memberships ${CLUSTER} \
-      --project ${PROJECT_ID}
+    if [[ ${CONTROL_PLANE} == "automatic" ]]; then 
+      gcloud container fleet mesh update \
+        --control-plane automatic \
+        --memberships ${CLUSTER} \
+        --project ${PROJECT_ID}
+    else
+      gcloud container fleet mesh update \
+        --control-plane manual \
+        --memberships ${CLUSTER} \
+        --project ${PROJECT_ID}
+      kubectl apply -f configs/cpr.yaml --context ${CLUSTER}
+      kubectl apply -f configs/mesh-config.yaml --context ${CLUSTER}
+    fi
   else
     ZONE=$(echo ${CLUSTER} | awk -F "-"  '{print $3 "-" $4 "-b"}' )
     
@@ -168,12 +179,16 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
       --gke-cluster=${ZONE}/${CLUSTER} \
       --enable-workload-identity   
     
-   if [[ ${CONTROL_PLANE} == "automatic" ]]; then 
+    if [[ ${CONTROL_PLANE} == "automatic" ]]; then 
       gcloud container fleet mesh update \
         --control-plane automatic \
         --memberships ${CLUSTER} \
         --project ${PROJECT_ID}
     else
+      gcloud container fleet mesh update \
+        --control-plane manual \
+        --memberships ${CLUSTER} \
+        --project ${PROJECT_ID}
       kubectl apply -f configs/cpr.yaml --context ${CLUSTER}
       kubectl apply -f configs/mesh-config.yaml --context ${CLUSTER}
     fi
