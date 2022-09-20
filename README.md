@@ -4,7 +4,7 @@ If you want to run the test across all variations you can run these commands to 
 ```bash
 export FOLDER_ID=
 export BILLING_ID=
-export PREFIX= 
+export PROJECT_PREFIX= 
 make setup-test
 ```
 
