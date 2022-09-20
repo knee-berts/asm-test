@@ -188,8 +188,8 @@ fi
 
 # Enable ingress feature which also enables the multi-cluster-services feature controller and install test app
 gcloud container fleet ingress enable \
---config-membership=/projects/${PROJECT_ID}/locations/global/memberships/"gke-${CLUSTER_TYPE}-us-central1" \
---project=${PROJECT_ID}
+  --config-membership=/projects/${PROJECT_ID}/locations/global/memberships/"gke-${CLUSTER_TYPE}-us-central1" \
+  --project=${PROJECT_ID}
 
 git clone https://github.com/theemadnes/gke-whereami.git configs/all-clusters/whereami
 
