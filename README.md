@@ -2,6 +2,9 @@
 
 ```bash
 export PROJECT_ID=
+export FOLDER_ID=
+export BILLING_ID=
+export PREFIX= 
 ```
 
 There are makefile commands for these combinations:
