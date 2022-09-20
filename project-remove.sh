@@ -10,10 +10,10 @@ declare -t projects=(
   ${PROJECT_REGULAR_AP} 
   )
 
-for project in ${projects}; do
-  gcloud endpoints services delete test.endpoints.${project}.cloud.goog --project=${project}
-  gcloud projects delete ${project} --folder ${FOLDER_ID}
-  echo "$project was created."
+for project in ${projects[@]}; do
+  gcloud endpoints services delete test.endpoints.${project}.cloud.goog --project=${project} -q
+  gcloud projects delete ${project} -q
+  echo "$project was deleted."
 done
 
 echo "Done"

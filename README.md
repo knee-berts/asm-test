@@ -30,7 +30,10 @@ make install-ap-rapid
 ```bash
 make install-ap-regular
 ```
-
+* Delete Projects listed in source.sh file
+```bash
+make cleanup
+```
 
 ::WIP::
 And a command to test Autopilot or Standard clusters connectivity

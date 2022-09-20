@@ -8,7 +8,7 @@ declare -t projects=(
   "${PROJECT_PREFIX}-regular-std-${suffix}" 
   "${PROJECT_PREFIX}-regular-ap-${suffix}" 
   )
-for project in ${projects}; do
+for project in ${projects[@]}; do
   gcloud projects create ${project} --folder ${FOLDER_ID}
   gcloud alpha billing projects link ${project} --billing-account ${BILLING_ID}
   echo "$project was created."
