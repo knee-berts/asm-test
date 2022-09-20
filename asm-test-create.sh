@@ -195,8 +195,8 @@ git clone https://github.com/theemadnes/gke-whereami.git configs/all-clusters/wh
 
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
   kubectl apply -f ${WORKDIR}/configs/pre-reqs/. --context ${CLUSTER}
-  kubectl apply -k whereami/k8s-backend-overlay-example/ --context=${CLUSTER} -n whereami 
-  kubectl apply -k whereami/k8s-frontend-overlay-example/ --context=${CLUSTER} -n whereami
+  kubectl apply -k ${WORKDIR}/configs/all-clusters/whereami/k8s-backend-overlay-example/ --context=${CLUSTER} -n whereami 
+  kubectl apply -k ${WORKDIR}/configs/all-clusters/whereami/k8s-frontend-overlay-example/ --context=${CLUSTER} -n whereami
 
   openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
     -subj "/CN=frontend.endpoints.${PROJECT_ID}.cloud.goog/O=Edge2Mesh Inc" \
