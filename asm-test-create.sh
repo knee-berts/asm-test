@@ -96,9 +96,6 @@ gcloud endpoints services deploy configs/test-openapi.yaml --project ${PROJECT_I
 
 # Enable mesh feature
 gcloud container fleet mesh enable --project=${PROJECT_ID}
-gcloud projects add-iam-policy-binding ${PROJECT_ID}  \
-  --member "serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-servicemesh.iam.gserviceaccount.com" \
-  --role roles/anthosservicemesh.serviceAgent
 
 ## Create Clusters
 echo "Creating a GKE clusters"
@@ -176,6 +173,10 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
   fi 
 done
 
+gcloud projects add-iam-policy-binding ${PROJECT_ID}  \
+  --member "serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-servicemesh.iam.gserviceaccount.com" \
+  --role roles/anthosservicemesh.serviceAgent
+
 ## Install MCI MCS and ASM Gateways
 if [[ $(gcloud compute ssl-certificates describe whereami-cert --project ${PROJECT_ID}) ]]; then
   echo "Test app cert already exists"
@@ -191,7 +192,9 @@ gcloud container fleet ingress enable \
   --config-membership=/projects/${PROJECT_ID}/locations/global/memberships/"gke-${CLUSTER_TYPE}-us-central1" \
   --project=${PROJECT_ID}
 
-git clone https://github.com/theemadnes/gke-whereami.git configs/all-clusters/whereami
+git clone https://github.com/GoogleCloudPlatform/kubernetes-engine-samples.git 
+cp -rf kubernetes-engine-samples/whereami ${WORKDIR}/configs/all-clusters/ 
+rm -rf kubernetes-engine-samples
 
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
   kubectl apply -f ${WORKDIR}/configs/pre-reqs/. --context ${CLUSTER}
