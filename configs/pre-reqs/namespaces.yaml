@@ -8,4 +8,4 @@ kind: Namespace
 metadata:
   name: whereami
   labels:
-    istio.io/rev: asm-managed
+    istio.io/rev: "{{RELEASE_CHANNEL}}"

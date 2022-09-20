@@ -117,7 +117,7 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
     echo ${CLUSTER}
     gcloud beta container --project ${PROJECT_ID} clusters create ${CLUSTER} \
       --zone ${ZONE} \
-      --release-channel "regular" \
+      --release-channel ${RELEASE_CHANNEL} \
       --machine-type "e2-medium" \
       --num-nodes "1" \
       --network "demo-vpc" \
