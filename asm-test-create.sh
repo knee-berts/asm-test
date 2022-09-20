@@ -94,10 +94,12 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{PROJECT_ID}}/${PROJECT_ID}/g" {} +
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{ASM_GW_IP}}/${ASM_GW_IP}/g" {} +
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{ASM_REV}}/${ASM_REV}/g" {} +
+  LC_ALL=C find . -type f -exec sed -i '' -e "s/{{RELEASE_CHANNEL}}/${RELEASE_CHANNEL}/g" {} +
 else
   find . -type f -exec sed -i -e "s/{{PROJECT_ID}}/${PROJECT_ID}/g" {} +
   find . -type f -exec sed -i -e "s/{{ASM_GW_IP}}/${ASM_GW_IP}/g" {} +
   find . -type f -exec sed -i -e "s/{{ASM_REV}}/${ASM_REV}/g" {} +
+  find . -type f -exec sed -i -e "s/{{RELEASE_CHANNEL}}/${RELEASE_CHANNEL}/g" {} +
 fi
 cd -
 echo "Creating gcp endpoints for test app."

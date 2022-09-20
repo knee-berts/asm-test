@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: asm-gateways
   labels:
-    istio.io/rev: asm-managed
+    istio.io/rev: "{{ASM_REV}}"
