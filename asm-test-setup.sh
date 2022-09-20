@@ -15,7 +15,8 @@ for project in ${projects[@]}; do
   DIR="test-${project}"
   mkdir ${DIR}
   cp -rf configs ${DIR}
-  cp asm-test-create.sh ${DIR}
+  cp *.sh ${DIR}
+  cp Makefile ${DIR}
 done
 
 cat <<EOF > source.sh
