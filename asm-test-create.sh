@@ -76,7 +76,7 @@ else
   echo "Creating ASM GW IP."
   gcloud compute addresses create asm-gw-ip --global --project ${PROJECT_ID}
 fi
-export ASM_GW_IP=`gcloud compute addresses describe asm-gw-ip --global --format="value(address)"`
+export ASM_GW_IP=`gcloud compute addresses describe asm-gw-ip --global --project ${PROJECT_ID} --format="value(address)"`
 echo -e "GCLB_IP is ${ASM_GW_IP}"
 
 cd configs
@@ -139,14 +139,14 @@ while [[ $(gcloud container clusters list --project ${PROJECT_ID} --filter "STAT
 done
 echo "All clusters are in the RUNNING status."
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
-  if [[ ${CLUSTER_TYPE} == "autopilot" ]]; then
+  if [[ ${CLUSTER_TYPE} == "ap" ]]; then
     REGION=$(echo ${CLUSTER} | awk -F "-"  '{print $3 "-" $4}' )
     
     gcloud container clusters update ${CLUSTER} --project ${PROJECT_ID} \
       --region ${REGION} \
       --update-labels mesh_id=proj-${PROJECT_NUMBER} 
     
-    gcloud container clusters get-credentials ${CLUSTER} --zone ${REGION} --project ${PROJECT_ID}
+    gcloud container clusters get-credentials ${CLUSTER} --region ${REGION} --project ${PROJECT_ID}
     kubectx ${CLUSTER}=gke_${PROJECT_ID}_${REGION}_${CLUSTER}
     
     gcloud container hub memberships register ${CLUSTER} \
@@ -183,7 +183,7 @@ else
   echo "Creating certificates for test app."
   gcloud compute ssl-certificates create test-cert \
       --domains=whereami.endpoints.${PROJECT_ID}.cloud.goog \
-      --global
+      --global --project ${PROJECT_ID}
 fi
 
 # Enable ingress feature which also enables the multi-cluster-services feature controller and install test app
@@ -222,7 +222,6 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
   fi
   echo "ASM MCP webhook has been created."   
   kubectl apply -f ${WORKDIR}/configs/all-clusters/. --context ${CLUSTER}
-
 done
 
 kubectl apply -f ${WORKDIR}/configs/config-cluster/. --context "gke-${CLUSTER_TYPE}-us-central1"  
