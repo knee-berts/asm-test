@@ -81,6 +81,11 @@ fi
 export ASM_GW_IP=`gcloud compute addresses describe asm-gw-ip --global --project ${PROJECT_ID} --format="value(address)"`
 echo -e "GCLB_IP is ${ASM_GW_IP}"
 
+if [[ "$RELEASE_CHANNEL" == "rapid" ]]; then
+  ASM_REV="asm-managed-rapid"
+else
+  ASM_REV="asm-managed"
+
 cd configs
 echo `pwd`
 ## Hydrate configs
@@ -88,11 +93,11 @@ echo "Hydrating configs"
 if [[ "$OSTYPE" == "darwin"* ]]; then
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{PROJECT_ID}}/${PROJECT_ID}/g" {} +
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{ASM_GW_IP}}/${ASM_GW_IP}/g" {} +
-  LC_ALL=C find . -type f -exec sed -i '' -e "s/{{RELEASE_CHANNEL}}/${RELEASE_CHANNEL}/g" {} +
+  LC_ALL=C find . -type f -exec sed -i '' -e "s/{{ASM_REV}}/${ASM_REV}/g" {} +
 else
   find . -type f -exec sed -i -e "s/{{PROJECT_ID}}/${PROJECT_ID}/g" {} +
   find . -type f -exec sed -i -e "s/{{ASM_GW_IP}}/${ASM_GW_IP}/g" {} +
-  find . -type f -exec sed -i -e "s/{{RELEASE_CHANNEL}}/${RELEASE_CHANNEL}/g" {} +
+  find . -type f -exec sed -i -e "s/{{ASM_REV}}/${ASM_REV}/g" {} +
 fi
 cd -
 echo "Creating gcp endpoints for test app."
@@ -165,6 +170,15 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
         --control-plane manual \
         --memberships ${CLUSTER} \
         --project ${PROJECT_ID}
+
+      kubectl create ns istio-system --context ${CLUSTER}  
+      until kubectl get crd controlplanerevisions.mesh.cloud.google.com
+      do
+        echo -n "...still waiting for ASM Control Plane Revision CRD to be created."
+        sleep 5
+      done
+      echo "ASM Control Plane Revision CRD has been created."
+
       kubectl apply -f configs/cpr.yaml --context ${CLUSTER}
       kubectl apply -f configs/mesh-config.yaml --context ${CLUSTER}
     fi
@@ -189,6 +203,14 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
         --control-plane manual \
         --memberships ${CLUSTER} \
         --project ${PROJECT_ID}
+
+      kubectl create ns istio-system --context ${CLUSTER}  
+      until kubectl get crd controlplanerevisions.mesh.cloud.google.com
+      do
+        echo -n "...still waiting for ASM Control Plane Revision CRD to be created."
+        sleep 5
+      done
+      echo "ASM Control Plane Revision CRD has been created."
       kubectl apply -f configs/cpr.yaml --context ${CLUSTER}
       kubectl apply -f configs/mesh-config.yaml --context ${CLUSTER}
     fi
