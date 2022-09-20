@@ -1,10 +1,16 @@
 # Repo that steps up a smoke test for multi-cluster ASM MCP on GKE clusters.
+If you want to run the test across all variations you can run these commands to setup the projects and local configs.
 
 ```bash
-export PROJECT_ID=
 export FOLDER_ID=
 export BILLING_ID=
 export PREFIX= 
+make setup-test
+```
+
+For each test you want to run set the project and pick the make command that aligns with your test combination.
+```bash
+export PROJECT_ID= 
 ```
 
 There are makefile commands for these combinations:
