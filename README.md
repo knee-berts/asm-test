@@ -15,11 +15,11 @@ make ${PROJECT_ID} install-std-regular
 ```
 * GKE Autopilot and ASM MCP both on the RAPID Channel
 ```bash
-make ${PROJECT_ID} install-std-rapid
+make ${PROJECT_ID} install-ap-rapid
 ```
 * GKE Autopilot and ASM MCP both on the REGULAR Channel
 ```bash
-make ${PROJECT_ID} install-std-regular
+make ${PROJECT_ID} install-ap-regular
 ```
 
 And a command to test Autopilot or Standard clusters connectivity
