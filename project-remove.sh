@@ -4,10 +4,14 @@ source source.sh
 
 unset projects
 declare -t projects=(
-  ${PROJECT_RAPID_STD} 
-  ${PROJECT_REGULAR_STD} 
-  ${PROJECT_RAPID_AP} 
-  ${PROJECT_REGULAR_AP} 
+  ${PROJECT_RAPID_STD_AUTO}
+  ${PROJECT_RAPID_AP_AUTO}
+  ${PROJECT_REGULAR_STD_AUTO}
+  ${PROJECT_REGULAR_AP_AUTO}
+  ${PROJECT_RAPID_STD_MANUAL}
+  ${PROJECT_RAPID_AP_MANUAL}
+  ${PROJECT_REGULAR_STD_MANUAL}
+  ${PROJECT_REGULAR_AP_MANUAL}
   )
 
 for project in ${projects[@]}; do

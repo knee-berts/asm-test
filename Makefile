@@ -16,16 +16,22 @@ install-std-regular-automatic: ##Installs a GKE standard multi cluster ASM MCP t
 	./asm-test-create.sh -p $(PROJECT_REGULAR_STD_AUTO) -r regular -t std -c automatic
 
 install-std-rapid-manual: ##Installs a GKE standard multi cluster ASM MCP test environment using the RAPID Channel
-	./asm-test-create.sh -p $(PROJECT_RAPID_STD) -r rapid -t std -c manual
+	./asm-test-create.sh -p $(PROJECT_RAPID_STD_MANUAL) -r rapid -t std -c manual
 
 install-std-rapid-automatic: ##Installs a GKE standard multi cluster ASM MCP test environment using the RAPID Channel
-	./asm-test-create.sh -p $(PROJECT_RAPID_STD) -r rapid -t std -c automatic
+	./asm-test-create.sh -p $(PROJECT_RAPID_STD_AUTO) -r rapid -t std -c automatic
 
-install-ap-regular-manual: ##Installs a GKE autopilot multi cluster ASM MCP test environment using the REGULAR Channel
-	./asm-test-create.sh -p $(PROJECT_REGULAR_AP) -r regular -t ap -c manual
+install-ap-regular-manual: ##Installs a GKE standard multi cluster ASM MCP test environment using the REGULAR Channel
+	./asm-test-create.sh -p $(PROJECT_REGULAR_AP_MANUAL) -r regular -t std -c manual
 
-install-ap-rapid: ##Installs a GKE autopilot multi cluster ASM MCP test environment using the RAPID Channel
-	./asm-test-create.sh -p $(PROJECT_ID) -r rapid -t ap -c automatic
+install-ap-regular-automatic: ##Installs a GKE standard multi cluster ASM MCP test environment using the REGULAR Channel
+	./asm-test-create.sh -p $(PROJECT_REGULAR_AP_AUTO) -r regular -t std -c automatic
+
+install-ap-rapid-manual: ##Installs a GKE standard multi cluster ASM MCP test environment using the RAPID Channel
+	./asm-test-create.sh -p $(PROJECT_RAPID_AP_MANUAL) -r rapid -t std -c manual
+
+install-ap-rapid-automatic: ##Installs a GKE standard multi cluster ASM MCP test environment using the RAPID Channel
+	./asm-test-create.sh -p $(PROJECT_RAPID_AP_AUTO) -r rapid -t std -c automatic
 
 cross-cluster-test: ##Tests ASM cross clusters service descovery
 	./validate-multi-cluster-mesh.sh

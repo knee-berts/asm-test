@@ -2,6 +2,10 @@
 
 set -Euo pipefail
 
+export WORKDIR=`pwd`
+export KUBECONFIG=${WORKDIR}/kubeconfig
+
+
 echo "Test cross cluster discovery."
 echo "Getting the whereami frontend external loadbalancer IP for cluster $(kubectx -c)."
 FRONTEND_IP=$(kubectl get services -n whereami -l app=whereami-frontend -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}")

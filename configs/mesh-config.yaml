@@ -3,8 +3,8 @@ metadata:
   name: asm-options
   namespace: istio-system
 data:
+  multicluster_mode: connected
   mesh: |-
     accessLogFile: /dev/stdout
-    multicluster_mode: connected
     trustDomainAliases: ["{{PROJECT_ID}}.svc.id.goog"]
 kind: ConfigMap

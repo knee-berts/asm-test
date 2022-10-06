@@ -71,7 +71,8 @@ else
     --direction INGRESS \
     --source-ranges 10.0.0.0/8
 fi
-  echo "Creating a global public IP for the ASM GW."
+
+echo "Creating a global public IP for the ASM GW."
 if [[ $(gcloud compute addresses describe asm-gw-ip --global --project ${PROJECT_ID}) ]]; then
   echo "ASM GW IP already exists."
 else
@@ -87,12 +88,6 @@ else
   ASM_REV="asm-managed"
 fi
 
-if [[ "$RELEASE_CHANNEL" == "regular"]]; then
-  CPR_NAME="asm-managed"
-else
-  CPR_NAME="asm-managed-rapid"
-fi
-
 cd configs
 ## Hydrate configs
 echo "Hydrating configs"
@@ -101,14 +96,13 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{ASM_GW_IP}}/${ASM_GW_IP}/g" {} +
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{ASM_REV}}/${ASM_REV}/g" {} +
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{RELEASE_CHANNEL}}/${RELEASE_CHANNEL}/g" {} +
-  LC_ALL=C find . -type f -exec sed -i '' -e "s/{{CPR_NAME}}/${CPR_NAME}/g" {} +
 else
   find . -type f -exec sed -i -e "s/{{PROJECT_ID}}/${PROJECT_ID}/g" {} +
   find . -type f -exec sed -i -e "s/{{ASM_GW_IP}}/${ASM_GW_IP}/g" {} +
   find . -type f -exec sed -i -e "s/{{ASM_REV}}/${ASM_REV}/g" {} +
   find . -type f -exec sed -i -e "s/{{RELEASE_CHANNEL}}/${RELEASE_CHANNEL}/g" {} +
-  find . -type f -exec sed -i -e "s/{{CPR_NAME}}/${CPR_NAME}/g" {} +
 fi
+
 cd -
 echo "Creating gcp endpoints for test app."
 gcloud endpoints services deploy configs/test-openapi.yaml --project ${PROJECT_ID} --async -q
