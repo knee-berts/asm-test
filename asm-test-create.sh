@@ -85,9 +85,15 @@ if [[ "$RELEASE_CHANNEL" == "rapid" ]]; then
   ASM_REV="asm-managed-rapid"
 else
   ASM_REV="asm-managed"
+fi
+
+if [[ "$RELEASE_CHANNEL" == "regular"]]; then
+  CPR_NAME="asm-managed"
+else
+  CPR_NAME="asm-managed-rapid"
+fi
 
 cd configs
-echo `pwd`
 ## Hydrate configs
 echo "Hydrating configs"
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -95,11 +101,13 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{ASM_GW_IP}}/${ASM_GW_IP}/g" {} +
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{ASM_REV}}/${ASM_REV}/g" {} +
   LC_ALL=C find . -type f -exec sed -i '' -e "s/{{RELEASE_CHANNEL}}/${RELEASE_CHANNEL}/g" {} +
+  LC_ALL=C find . -type f -exec sed -i '' -e "s/{{CPR_NAME}}/${CPR_NAME}/g" {} +
 else
   find . -type f -exec sed -i -e "s/{{PROJECT_ID}}/${PROJECT_ID}/g" {} +
   find . -type f -exec sed -i -e "s/{{ASM_GW_IP}}/${ASM_GW_IP}/g" {} +
   find . -type f -exec sed -i -e "s/{{ASM_REV}}/${ASM_REV}/g" {} +
   find . -type f -exec sed -i -e "s/{{RELEASE_CHANNEL}}/${RELEASE_CHANNEL}/g" {} +
+  find . -type f -exec sed -i -e "s/{{CPR_NAME}}/${CPR_NAME}/g" {} +
 fi
 cd -
 echo "Creating gcp endpoints for test app."
@@ -149,20 +157,20 @@ echo "All clusters are in the RUNNING status."
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
   if [[ ${CLUSTER_TYPE} == "ap" ]]; then
     REGION=$(echo ${CLUSTER} | awk -F "-"  '{print $3 "-" $4}' )
-    
+
     gcloud container clusters update ${CLUSTER} --project ${PROJECT_ID} \
       --region ${REGION} \
-      --update-labels mesh_id=proj-${PROJECT_NUMBER} 
-    
+      --update-labels mesh_id=proj-${PROJECT_NUMBER}
+
     gcloud container clusters get-credentials ${CLUSTER} --region ${REGION} --project ${PROJECT_ID}
     kubectx ${CLUSTER}=gke_${PROJECT_ID}_${REGION}_${CLUSTER}
-    
+
     gcloud container hub memberships register ${CLUSTER} \
       --project=${PROJECT_ID} \
       --gke-cluster=${REGION}/${CLUSTER} \
       --enable-workload-identity
-    
-    if [[ ${CONTROL_PLANE} == "automatic" ]]; then 
+
+    if [[ ${CONTROL_PLANE} == "automatic" ]]; then
       gcloud container fleet mesh update \
         --control-plane automatic \
         --memberships ${CLUSTER} \
@@ -173,7 +181,7 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
         --memberships ${CLUSTER} \
         --project ${PROJECT_ID}
 
-      kubectl create ns istio-system --context ${CLUSTER}  
+      kubectl create ns istio-system --context ${CLUSTER}
       until kubectl get crd controlplanerevisions.mesh.cloud.google.com
       do
         echo -n "...still waiting for ASM Control Plane Revision CRD to be created."
@@ -186,16 +194,16 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
     fi
   else
     ZONE=$(echo ${CLUSTER} | awk -F "-"  '{print $3 "-" $4 "-b"}' )
-    
+
     gcloud container clusters get-credentials ${CLUSTER} --zone ${ZONE} --project ${PROJECT_ID}
     kubectx ${CLUSTER}=gke_${PROJECT_ID}_${ZONE}_${CLUSTER}
 
     gcloud container hub memberships register ${CLUSTER} \
       --project=${PROJECT_ID} \
       --gke-cluster=${ZONE}/${CLUSTER} \
-      --enable-workload-identity   
-    
-    if [[ ${CONTROL_PLANE} == "automatic" ]]; then 
+      --enable-workload-identity
+
+    if [[ ${CONTROL_PLANE} == "automatic" ]]; then
       gcloud container fleet mesh update \
         --control-plane automatic \
         --memberships ${CLUSTER} \
@@ -206,7 +214,7 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
         --memberships ${CLUSTER} \
         --project ${PROJECT_ID}
 
-      kubectl create ns istio-system --context ${CLUSTER}  
+      kubectl create ns istio-system --context ${CLUSTER}
       until kubectl get crd controlplanerevisions.mesh.cloud.google.com
       do
         echo -n "...still waiting for ASM Control Plane Revision CRD to be created."
@@ -216,7 +224,7 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
       kubectl apply -f configs/cpr.yaml --context ${CLUSTER}
       kubectl apply -f configs/mesh-config.yaml --context ${CLUSTER}
     fi
-  fi 
+  fi
 done
 
 gcloud projects add-iam-policy-binding ${PROJECT_ID}  \
@@ -224,27 +232,25 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID}  \
   --role roles/anthosservicemesh.serviceAgent
 
 ## Install MCI MCS and ASM Gateways
-if [[ $(gcloud compute ssl-certificates describe whereami-cert --project ${PROJECT_ID}) ]]; then
-  echo "Test app cert already exists"
-else
-  echo "Creating certificates for test app."
-  gcloud compute ssl-certificates create test-cert \
-      --domains=whereami.endpoints.${PROJECT_ID}.cloud.goog \
-      --global --project ${PROJECT_ID}
-fi
 
 # Enable ingress feature which also enables the multi-cluster-services feature controller and install test app
+gcloud container fleet multi-cluster-services enable --project=${PROJECT_ID}
+
 gcloud container fleet ingress enable \
   --config-membership=/projects/${PROJECT_ID}/locations/global/memberships/"gke-${CLUSTER_TYPE}-us-central1" \
   --project=${PROJECT_ID}
 
-git clone https://github.com/GoogleCloudPlatform/kubernetes-engine-samples.git 
-cp -rf kubernetes-engine-samples/whereami ${WORKDIR}/configs/all-clusters/ 
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member "serviceAccount:${PROJECT_ID}.svc.id.goog[gke-mcs/gke-mcs-importer]" \
+    --role "roles/compute.networkViewer"
+
+git clone https://github.com/GoogleCloudPlatform/kubernetes-engine-samples.git
+cp -rf kubernetes-engine-samples/whereami ${WORKDIR}/configs/all-clusters/
 rm -rf kubernetes-engine-samples
 
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
   kubectl apply -f ${WORKDIR}/configs/pre-reqs/. --context ${CLUSTER}
-  kubectl apply -k ${WORKDIR}/configs/all-clusters/whereami/k8s-backend-overlay-example/ --context=${CLUSTER} -n whereami 
+  kubectl apply -k ${WORKDIR}/configs/all-clusters/whereami/k8s-backend-overlay-example/ --context=${CLUSTER} -n whereami
   kubectl apply -k ${WORKDIR}/configs/all-clusters/whereami/k8s-frontend-overlay-example/ --context=${CLUSTER} -n whereami
 
   openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
@@ -262,16 +268,25 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
       echo -n "...still waiting for ASM MCP webhook creation"
       sleep 5
     done
-  else 
+  else
     until kubectl get mutatingwebhookconfigurations istiod-asm-managed --context ${CLUSTER}
     do
       echo -n "...still waiting for ASM MCP webhook creation"
       sleep 5
     done
   fi
-  echo "ASM MCP webhook has been created."   
+  echo "ASM MCP webhook has been created."
   kubectl apply -f ${WORKDIR}/configs/all-clusters/. --context ${CLUSTER}
 done
+
+if [[ $(gcloud compute ssl-certificates describe whereami-cert --project ${PROJECT_ID}) ]]; then
+  echo "Test app cert already exists"
+else
+  echo "Creating certificates for test app."
+  gcloud compute ssl-certificates create test-cert \
+      --domains=whereami.endpoints.${PROJECT_ID}.cloud.goog \
+      --global --project ${PROJECT_ID}
+fi
 
 kubectl apply -f ${WORKDIR}/configs/config-cluster/. --context "gke-${CLUSTER_TYPE}-us-central1"  
 

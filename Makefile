@@ -9,27 +9,26 @@ MKFILE_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 setup-test: ##Creates four projects and configures directories to test each variation.
 	./asm-test-setup.sh
 
-install-std-manual: ##Installs a GKE standard multi cluster ASM MCP test environment using the REGULAR Channel
-	./asm-test-create.sh -p $(PROJECT_ID) -r regular -t std -c manual
+install-std-regular-manual: ##Installs a GKE standard multi cluster ASM MCP test environment using the REGULAR Channel
+	./asm-test-create.sh -p $(PROJECT_REGULAR_STD_MANUAL) -r regular -t std -c manual
 
-install-std-regular: ##Installs a GKE standard multi cluster ASM MCP test environment using the REGULAR Channel
-	./asm-test-create.sh -p $(PROJECT_ID) -r regular -t std -c automatic
+install-std-regular-automatic: ##Installs a GKE standard multi cluster ASM MCP test environment using the REGULAR Channel
+	./asm-test-create.sh -p $(PROJECT_REGULAR_STD_AUTO) -r regular -t std -c automatic
 
-install-std-rapid: ##Installs a GKE standard multi cluster ASM MCP test environment using the RAPID Channel
-	./asm-test-create.sh -p $(PROJECT_ID) -r rapid -t std -c automatic
+install-std-rapid-manual: ##Installs a GKE standard multi cluster ASM MCP test environment using the RAPID Channel
+	./asm-test-create.sh -p $(PROJECT_RAPID_STD) -r rapid -t std -c manual
 
-install-ap-regular: ##Installs a GKE autopilot multi cluster ASM MCP test environment using the REGULAR Channel
-	./asm-test-create.sh -p $(PROJECT_ID) -r regular -t ap -c automatic
+install-std-rapid-automatic: ##Installs a GKE standard multi cluster ASM MCP test environment using the RAPID Channel
+	./asm-test-create.sh -p $(PROJECT_RAPID_STD) -r rapid -t std -c automatic
+
+install-ap-regular-manual: ##Installs a GKE autopilot multi cluster ASM MCP test environment using the REGULAR Channel
+	./asm-test-create.sh -p $(PROJECT_REGULAR_AP) -r regular -t ap -c manual
 
 install-ap-rapid: ##Installs a GKE autopilot multi cluster ASM MCP test environment using the RAPID Channel
 	./asm-test-create.sh -p $(PROJECT_ID) -r rapid -t ap -c automatic
 
-std-cross-cluster-test: ##Tests ASM cross clusters service descovery in standard env
-	./cross-cluster-test.sh -t std
-
-ap-cross-cluster-test: ##Tests ASM cross clusters service descovery in autopilot env
-	./cross-cluster-test.sh -t ap
+cross-cluster-test: ##Tests ASM cross clusters service descovery
+	./validate-multi-cluster-mesh.sh
 
 cleanup: ## Delete projects created by setup test
 	./project-remove.sh
-
