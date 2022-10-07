@@ -5,14 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2dcd2395-09ca-40d4-9068-694a8ad2e0ee" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/asm-test-create.sh" beforeDir="false" afterPath="$PROJECT_DIR$/asm-test-create.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/asm-test-setup.sh" beforeDir="false" afterPath="$PROJECT_DIR$/asm-test-setup.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/configs/cpr.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/configs/cpr.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/configs/mesh-config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/configs/mesh-config.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project-remove.sh" beforeDir="false" afterPath="$PROJECT_DIR$/project-remove.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source.sh" beforeDir="false" afterPath="$PROJECT_DIR$/source.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/validate-multi-cluster-mesh.sh" beforeDir="false" afterPath="$PROJECT_DIR$/validate-multi-cluster-mesh.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,7 +37,7 @@
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
     "RunOnceActivity.go.watchers.conflict.with.on.save.actions.check.performed": "true",
     "WebServerToolWindowFactoryState": "false",
-    "com.google.cloudcode.ide_session_index": "20221006_0002",
+    "com.google.cloudcode.ide_session_index": "20221007_0004",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "last_opened_file_path": "/Users/nickeberts/projects/asm-test/test-nje-rapid-ap-16569",
