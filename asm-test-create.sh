@@ -2,13 +2,14 @@
 
 set -Euo pipefail
 
-while getopts p:r:t:c: flag
+while getopts p:r:t:c:a: flag
 do
   case "${flag}" in
       p) PROJECT_ID=${OPTARG};;
       r) RELEASE_CHANNEL=${OPTARG};;
       t) CLUSTER_TYPE=${OPTARG};;
       c) CONTROL_PLANE=${OPTARG};;
+      a) ACCESS=${OPTARG};;
   esac
 done
 
@@ -17,6 +18,7 @@ echo "PROJECT_ID: ${PROJECT_ID}"
 echo "RELEASE_CHANNEL: ${RELEASE_CHANNEL}" ## regular or rapid
 echo "CLUSTER_TYPE: ${CLUSTER_TYPE}"  ## std or ap 
 echo "CONTROL_PLANE: ${CONTROL_PLANE}"  ## automatic or manual
+echo "ACCESS: ${ACCESS}"  ## automatic or manual
 
 export PROJECT_NUMBER=$(gcloud projects describe ${PROJECT_ID} --format="value(projectNumber)")
 export WORKDIR=`pwd`
@@ -112,7 +114,10 @@ gcloud container fleet mesh enable --project=${PROJECT_ID}
 
 ## Create Clusters
 echo "Creating a GKE clusters"
+i=0
 for CLUSTER in ${GKE_CLUSTERS[@]}; do
+  ((i++))
+  CONTROL_PLANE_CIDR="170.16.${i}.0/28"
   if [[ ${CLUSTER_TYPE} == "ap" ]]; then
     REGION=$(echo ${CLUSTER} | awk -F "-"  '{print $3 "-" $4}' )
     gcloud beta container --project ${PROJECT_ID} clusters create-auto ${CLUSTER} \
@@ -123,25 +128,47 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
       --master-authorized-networks 0.0.0.0/0 \
       --async
 
-    else
+  else
     ZONE=$(echo ${CLUSTER} | awk -F "-"  '{print $3 "-" $4 "-b"}' )
     echo ${CLUSTER}
-    gcloud beta container --project ${PROJECT_ID} clusters create ${CLUSTER} \
-      --zone ${ZONE} \
-      --release-channel ${RELEASE_CHANNEL} \
-      --machine-type "e2-medium" \
-      --num-nodes "1" \
-      --network "demo-vpc" \
-      --enable-ip-alias \
-      --enable-autoscaling --min-nodes "1" --max-nodes "10" \
-      --enable-autoupgrade --enable-autorepair --max-surge-upgrade 1 --max-unavailable-upgrade 0 \
-      --labels mesh_id=proj-${PROJECT_NUMBER} \
-      --autoscaling-profile optimize-utilization \
-      --workload-pool "${PROJECT_ID}.svc.id.goog" \
-      --enable-master-authorized-networks \
-      --master-authorized-networks 0.0.0.0/0 \
-      --async
+    if [[ ${ACCESS} == "private" ]]; then
+      gcloud beta container --project ${PROJECT_ID} clusters create ${CLUSTER} \
+        --zone ${ZONE} \
+        --release-channel ${RELEASE_CHANNEL} \
+        --machine-type "e2-medium" \
+        --num-nodes "1" \
+        --network "demo-vpc" \
+        --enable-ip-alias \
+        --enable-autoscaling --min-nodes "1" --max-nodes "10" \
+        --enable-autoupgrade --enable-autorepair --max-surge-upgrade 1 --max-unavailable-upgrade 0 \
+        --labels mesh_id=proj-${PROJECT_NUMBER} \
+        --autoscaling-profile optimize-utilization \
+        --workload-pool "${PROJECT_ID}.svc.id.goog" \
+        --enable-master-authorized-networks \
+        --master-authorized-networks 0.0.0.0/0 \
+        --master-ipv4-cidr ${CONTROL_PLANE_CIDR} \
+        --enable-private-nodes \
+        --enable-master-authorized-networks \
+        --master-authorized-networks 10.0.0.0/12 \
+        --enable-master-global-access \
+        --async
+    else
+      gcloud beta container --project ${PROJECT_ID} clusters create ${CLUSTER} \
+        --zone ${ZONE} \
+        --release-channel ${RELEASE_CHANNEL} \
+        --machine-type "e2-medium" \
+        --num-nodes "1" \
+        --network "demo-vpc" \
+        --enable-ip-alias \
+        --enable-autoscaling --min-nodes "1" --max-nodes "10" \
+        --enable-autoupgrade --enable-autorepair --max-surge-upgrade 1 --max-unavailable-upgrade 0 \
+        --labels mesh_id=proj-${PROJECT_NUMBER} \
+        --autoscaling-profile optimize-utilization \
+        --workload-pool "${PROJECT_ID}.svc.id.goog" \
+        --enable-master-authorized-networks \
+        --async
     fi
+  fi
 done
 while [[ $(gcloud container clusters list --project ${PROJECT_ID} --filter "STATUS=RUNNING" --format="value(name)"| wc -l | awk '{print $1}') != "3" ]]; do
   echo "Waiting for all the cluster installs to complete."
@@ -156,13 +183,16 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
       --region ${REGION} \
       --update-labels mesh_id=proj-${PROJECT_NUMBER}
 
-    gcloud container clusters get-credentials ${CLUSTER} --region ${REGION} --project ${PROJECT_ID}
-    kubectx ${CLUSTER}=gke_${PROJECT_ID}_${REGION}_${CLUSTER}
+    # gcloud container clusters get-credentials ${CLUSTER} --region ${REGION} --project ${PROJECT_ID}
 
     gcloud container hub memberships register ${CLUSTER} \
       --project=${PROJECT_ID} \
       --gke-cluster=${REGION}/${CLUSTER} \
       --enable-workload-identity
+    
+    gcloud beta container fleet memberships get-credentials ${CLUSTER} --project ${PROJECT_ID}
+    CONTEXT=`kubectl config view -o jsonpath='{.users[*].name}' | grep ${CLUSTER}`
+    kubectx ${CLUSTER}=${CONTEXT}
 
     if [[ ${CONTROL_PLANE} == "automatic" ]]; then
       gcloud container fleet mesh update \
@@ -189,13 +219,14 @@ for CLUSTER in ${GKE_CLUSTERS[@]}; do
   else
     ZONE=$(echo ${CLUSTER} | awk -F "-"  '{print $3 "-" $4 "-b"}' )
 
-    gcloud container clusters get-credentials ${CLUSTER} --zone ${ZONE} --project ${PROJECT_ID}
-    kubectx ${CLUSTER}=gke_${PROJECT_ID}_${ZONE}_${CLUSTER}
-
     gcloud container hub memberships register ${CLUSTER} \
       --project=${PROJECT_ID} \
       --gke-cluster=${ZONE}/${CLUSTER} \
       --enable-workload-identity
+
+    gcloud beta container fleet memberships get-credentials ${CLUSTER} --project ${PROJECT_ID}
+    CONTEXT=`kubectl config view -o jsonpath='{.users[*].name}' | grep ${CLUSTER}`
+    kubectx ${CLUSTER}=${CONTEXT}
 
     if [[ ${CONTROL_PLANE} == "automatic" ]]; then
       gcloud container fleet mesh update \
